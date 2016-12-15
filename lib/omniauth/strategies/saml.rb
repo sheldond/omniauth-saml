@@ -48,10 +48,12 @@ module OmniAuth
       end
 
       def callback_phase
+        Rails.logger.info('OmniAuth::Strategies::SAML#callback_phase')
         raise OmniAuth::Strategies::SAML::ValidationError.new("SAML response missing") unless request.params["SAMLResponse"]
 
         # Call a fingerprint validation method if there's one
         if options.idp_cert_fingerprint_validator
+          Rails.logger.info('OmniAuth::Strategies::SAML#callback_phase idp_cert_fingerprint_validator')
           fingerprint_exists = options.idp_cert_fingerprint_validator[response_fingerprint]
           unless fingerprint_exists
             raise OmniAuth::Strategies::SAML::ValidationError.new("Non-existent fingerprint")
@@ -73,17 +75,21 @@ module OmniAuth
           end
 
         handle_response(request.params["SAMLResponse"], opts, settings) do
+          Rails.logger.info('OmniAuth::Strategies::SAML#callback_phase super')
           super
         end
 
       rescue OmniAuth::Strategies::SAML::ValidationError
+        Rails.logger.info('OmniAuth::Strategies::SAML#callback_phase OmniAuth::Strategies::SAML::ValidationError')
         fail!(:invalid_ticket, $!)
       rescue OneLogin::RubySaml::ValidationError
+        Rails.logger.info('OmniAuth::Strategies::SAML#callback_phase OneLogin::RubySaml::ValidationError')
         fail!(:invalid_ticket, $!)
       end
 
       # Obtain an idp certificate fingerprint from the response.
       def response_fingerprint
+        Rails.logger.info('OmniAuth::Strategies::SAML#response_fingerprint')
         response = request.params["SAMLResponse"]
         response = (response =~ /^</) ? response : Base64.decode64(response)
         document = XMLSecurity::SignedDocument::new(response)
